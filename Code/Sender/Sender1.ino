@@ -26,6 +26,9 @@ int sensor2 = 0;
 // MAC Address of the receiving ESP32 - edit as needed
 uint8_t broadcastAddress[] = {0xD4, 0x8A, 0xFC, 0xAA, 0xF5, 0xA4};
 
+// Create an instance of the web server on port 80
+WebServer server(80);
+
 void setup() 
 {
     Serial.begin(115200);
@@ -55,6 +58,11 @@ void setup()
         Serial.println("Failed to add peer");
         return;
     }
+	
+    // Start the web server
+    server.on("/", handleRoot);
+    server.begin();
+    Serial.println("HTTP server started");
 }
 
 void loop() 
@@ -170,4 +178,15 @@ int readInfrarojo (int pin)
     Serial.print(": ");
     Serial.println(value);        // Print the sensor value for debugging
     return value; 
+}
+
+
+void handleRoot()
+ {
+    String html = "<html><body><h1>ESP32 Sensor Data</h1>";
+    html += "<p>Sensor 1 Value: " + String(myData.value) + "</p>";
+    html += "<p>Sensor 2 Value: " + String(totalSensor2 / 10.0) + "</p>";
+    html += "</body></html>";
+    
+    server.send(200, "text/html", html); // Send HTML response
 }
