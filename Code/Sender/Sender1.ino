@@ -94,9 +94,7 @@ void setup()
 
     // Setup web server handlers
     server.on("/", handle_OnConnect);
-    server.on("/stop", handle_stop);
-    server.on("/start", handle_start);
-
+    
     server.begin();
     Serial.println("HTTP server started");
 }
@@ -136,6 +134,7 @@ void loop()
        }
      }
 
+    server.handleClient();  // Gestionar las solicitudes HTTP
 
     do 
     {
@@ -264,26 +263,19 @@ void sendSensorData(float totalSensor, int sensorID)
     envioExitoso = false;
 }
 
-String SendHTML() 
+void handle_OnConnect() 
 {
-    String ptr = "<!DOCTYPE html> <html>\n";
-    ptr += "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
-    ptr += "<meta http-equiv=\"refresh\" content=\"1\">\n";
-    ptr += "<title>Carrito</title>\n";
-    ptr += "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
-    ptr += "body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 10px;}\n";
-    ptr += ".button {display: block;width: 120px;background-color: #3498db;border: none;color: white;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;}\n";
-    ptr += "</style>\n";
-    ptr += "</head>\n<body>\n";
-    ptr += "<br><br><h2>Sensores de Humedad</h2>";  
-    ptr += "<p>Humedad Maceta 1: " + String(totalSensor[0]) + "</p>";
-    ptr += "<p>Humedad Maceta 2" + String(totalSensor[1]) + "</p>";
-    ptr += "<p>Humedad Maceta 3: " + String(totalSensor[2]) + "</p>";
-    ptr += "<p>Humedad Maceta 4: " + String(totalSensor[3]) + "</p>";
-    ptr += "</body>\n</html>\n";
-    return ptr;
-}
+    String html = "<html><body><h1>Sensor Data</h1>";
+    html += "<p>Sensor 1: " + String(totalSensor[0]) + "</p>";
+    html += "<p>Sensor 2: " + String(totalSensor[1]) + "</p>";
+    html += "<p>Sensor 3: " + String(totalSensor[2]) + "</p>";
+    html += "<p>Sensor 4: " + String(totalSensor[3]) + "</p>";
+    html += "<br><br><a href='/start'>Start</a><br>";
+    html += "<a href='/stop'>Stop</a>";
+    html += "</body></html>";
 
+    server.send(200, "text/html", html);  // Send the HTML response
+}
 
 
 
