@@ -112,7 +112,7 @@ void loop() {
     // Verifica si la acción debe ser activada
    if (valorHumedad1 < 8 && sensorInfrarojo1 == true && sensorDetected1 <= 3 && action1 == false) 
     {
-      Serial.println("Action triggered based on received data. Parate alv");
+      Serial.println("Action triggered based on received data. pl");
       valorHumedad1 = 0; // Reiniciar el valor
       sensorInfrarojo1 = false; // Reiniciar el estado     
       digitalWrite(MOTOR_IZQ1, LOW);
