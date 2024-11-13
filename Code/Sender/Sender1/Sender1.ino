@@ -301,7 +301,7 @@ void handle_OnConnect()
     html += "<p>Sensor 4: " + String(totalSensor[4]/10) + "</p>\n";
     html += "</div>\n";
     
-    // Recargar la página cada 5 segundos
+    // Recargar la página cada 20 segundos
     html += "<meta http-equiv='refresh' content='20'>\n";
     
     html += "</main>\n";
