@@ -1,8 +1,21 @@
 #include <esp_now.h>
 #include <WiFi.h>
 
-#define SENSORHUMEDAD_1 34      /* Define the pin for the first sensor */
-#define SENSORHUMEDAD_2 35      /* Define the pin for the second sensor */
+#define SENSORHUMEDAD_1 33      /* Define the pin for the first sensor */
+#define SENSORHUMEDAD_2 34      /* Define the pin for the second sensor */
+#define SENSORHUMEDAD_3 35
+#define SENSORHUMEDAD_4 32
+
+#define SENSOR_INFRAROJO_1 5
+#define SENSOR_INFRAROJO_2 17
+#define SENSOR_INFRAROJO_3 16
+#define SENSOR_INFRAROJO_4 4
+
+
+float totalSensor[4] = {0, 0, 0, 0};  // Arreglo que contiene los valores de los 4 sensores
+bool envioExitoso = false;  // Variable para indicar si el envío fue exitoso
+int reintentosMaximos = 100;   // Número máximo de reintentos
+
 
 // Structure to hold data
 typedef struct struct_message {
@@ -16,18 +29,16 @@ typedef struct struct_message {
 struct_message myData;
 esp_now_peer_info_t peerInfo;
 
-float totalSensor1 = 0;
-float totalSensor2 = 0;
-
-
 int sensor1 = 0;
 int sensor2 = 0;
+int sensor3 = 0;
+int sensor4 = 0;
 
 // MAC Address of the receiving ESP32 - edit as needed
-uint8_t broadcastAddress[] = {0xD4, 0x8A, 0xFC, 0xAA, 0xF5, 0xA4};
+uint8_t broadcastAddress[] = {0xA0, 0xB7, 0x65, 0x22, 0xF5, 0x28};
 
 // Create an instance of the web server on port 80
-WebServer server(80);
+//Server Server(80);
 
 void setup() 
 {
@@ -35,15 +46,26 @@ void setup()
     
 
     pinMode(2, OUTPUT);
-    pinMode(SENSORHUMEDAD_1, INPUT);  // Set the sensor pin as input
-    pinMode(SENSORHUMEDAD_2, INPUT);  // Set the second sensor pin as input
-    pinMode(15, INPUT);  // Set the second sensor pin as input
+    //Humidity sensor inputs
+    pinMode(SENSORHUMEDAD_1, INPUT); 
+    pinMode(SENSORHUMEDAD_2, INPUT);  
+    pinMode(SENSORHUMEDAD_3, INPUT);  
+    pinMode(SENSORHUMEDAD_4, INPUT);    
+
+
+    //Infrarojo inputs
+    pinMode(SENSOR_INFRAROJO_1, INPUT);
+    pinMode(SENSOR_INFRAROJO_2, INPUT);
+    pinMode(SENSOR_INFRAROJO_3, INPUT);
+    pinMode(SENSOR_INFRAROJO_4, INPUT);  
+
     WiFi.mode(WIFI_STA);
 
     // Initialize ESP-NOW
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("Error initializing ESP-NOW");
-        return;
+    if (esp_now_init() != ESP_OK) 
+    {
+       Serial.println("Error initializing ESP-NOW");
+       return;
     }
 
     // Register the send callback
@@ -54,15 +76,11 @@ void setup()
     peerInfo.channel = 0;
     peerInfo.encrypt = false;
 
-    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        Serial.println("Failed to add peer");
-        return;
+    if (esp_now_add_peer(&peerInfo) != ESP_OK) 
+    {
+       Serial.println("Failed to add peer");
+       return;
     }
-	
-    // Start the web server
-    server.on("/", handleRoot);
-    server.begin();
-    Serial.println("HTTP server started");
 }
 
 void loop() 
@@ -72,95 +90,110 @@ void loop()
      bool estadoSensor3 = false;
      bool estadoSensor4 = false;
 
-    // Read sensor values 10 times and accumulate
-    for (int i = 0; i < 10; i++) 
-    {
-      totalSensor1 += 10; //readSensor(SENSORHUMEDAD_1); // Read value from sensor 1
-      totalSensor2 += readSensor(SENSORHUMEDAD_2); // Read value from sensor 2
-    }
-   
-
-    if (totalSensor1 >= 100)
-    {
-      // Calculate average values
-      myData.sensor = 1;  // Identifying sensor 1
-      myData.value = totalSensor1 / 10.0; // Average value of sensor 1
-      myData.infraRojo = 0;
-      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
-        digitalWrite(2, HIGH);  // Turn on the LED if data was sent successfully
-      } else {
-        Serial.println("Failed to send data for sensor 1");
-      }
-    }  else 
-    {
-      myData.sensor = 1;  // Identifying sensor 1
-      myData.value =  0; // Average value of sensor 1
-      myData.infraRojo = 0;
-      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
-        digitalWrite(2, HIGH);  // Turn on the LED if data was sent successfully
-      } else {
-        Serial.println("Failed to send data for sensor 1");
-      }
-    }
-
-    if (totalSensor2 > 100)
-    {
-      // Send accumulated data for sensor 2
-      myData.sensor = 2;  // Identifying sensor 2
-      myData.value = totalSensor2 / 10.0; // Average value of sensor 2
-      myData.infraRojo = 0;
-      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
-        digitalWrite(2, LOW);
-      } else {
-        Serial.println("Failed to send data for sensor 2");
+     for (int i = 1; i < 5; i++) 
+     {
+        totalSensor[i] = 0;  // Resetear el valor acumulado antes de la suma
+        for (int j = 0; j < 10; j++) 
+        {
+          totalSensor[i] = readSensor(i+31); 
+          delay(50);  // Esperar un poco entre lecturas para estabilizar
+        }
+        totalSensor[i] /= 10.0;  // Calcular el promedio
+        Serial.print("Promedio Sensor ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(totalSensor[i]);
      }
-    } else 
-    {
-      myData.sensor = 2;  // Identifying sensor 1
-      myData.value =  0; // Average value of sensor 1
-      myData.infraRojo = 0;
-      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
-        digitalWrite(2, HIGH);  // Turn on the LED if data was sent successfully
-        delay(500);
-      } else {
-        Serial.println("Failed to send data for sensor 1");
-      }
-    }
-    
-    
+
+
+
+     for(int i = 1; i < 5 ; i++ )
+     {
+       if (totalSensor[i] > 350)
+       {
+         sendSensorData(totalSensor[i], i);
+         Serial.println("Hola");
+         Serial.println(i);
+         Serial.println(totalSensor[i]);
+       }
+     }
+
+
     do 
     {
-     sensor1 = readInfrarojo(15);
-     if (sensor1 == 0)
+     sensor1 = readInfrarojo(SENSOR_INFRAROJO_1);
+     sensor2 = readInfrarojo(SENSOR_INFRAROJO_2);
+     sensor3 = readInfrarojo(SENSOR_INFRAROJO_3);
+     sensor4 = readInfrarojo(SENSOR_INFRAROJO_4);
+
+     
+     if (sensor1 == 0 && estadoSensor1 == false)
      {
       myData.sensor = 1;
       myData.value =  0;
       myData.infraRojo = 1;
       if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
-        digitalWrite(2, HIGH); 
-        delay(500); // Turn on the LED if data was sent successfully
-        digitalWrite(2, LOW);
       }
       estadoSensor1 = true;
      }
+     
+     if (sensor2 == 0 && estadoSensor2 == false)
+     {
+      myData.sensor = 2;
+      myData.value =  0;
+      myData.infraRojo = 2;
+      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
+      }
+      estadoSensor2 = true;
+     } else 
+     
+     if (sensor3 == 0 && estadoSensor3 == false)
+     {
+      myData.sensor = 3;
+      myData.value =  0;
+      myData.infraRojo = 3;
+      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
+      }
+      estadoSensor3 = true;
+     }
 
-    } while(estadoSensor1 == false);  
+     if (sensor4 == 0 && estadoSensor4 == false)
+     {
+      myData.sensor = 4;
+      myData.value =  0;
+      myData.infraRojo = 4;
+      if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
+      }
+      estadoSensor4 = true;
+     }
+
+    } while(estadoSensor1 == false && estadoSensor2 == false && estadoSensor3 == false && estadoSensor4 == false);  
     
       
     totalSensor1 = 0;
     totalSensor2 = 0;
+    totalSensor3 = 0;
+    totalSensor4 = 0;
     // Add any other logic you want to execute
-   
 }
 
 // Callback function called when data is sent
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    Serial.print("\r\nLast Packet Send Status:\t");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
+{
+    if (status == ESP_NOW_SEND_SUCCESS) 
+    {
+       envioExitoso = true;  // Marca el envío como exitoso
+       Serial.println("Data sent successfully.");
+    } else 
+    {
+       envioExitoso = false;  // Si falló, marcar como falso
+       Serial.println("Failed to send data.");
+    }
 }
 
 // Function to read the sensor value from the given pin
-int readSensor(int pin) {
+int readSensor(int pin) 
+{
     int value = analogRead(pin);  // Read the analog value from the specified pin
     Serial.print("Sensor value from pin ");
     Serial.print(pin);
@@ -181,12 +214,34 @@ int readInfrarojo (int pin)
 }
 
 
-void handleRoot()
- {
-    String html = "<html><body><h1>ESP32 Sensor Data</h1>";
-    html += "<p>Sensor 1 Value: " + String(myData.value) + "</p>";
-    html += "<p>Sensor 2 Value: " + String(totalSensor2 / 10.0) + "</p>";
-    html += "</body></html>";
-    
-    server.send(200, "text/html", html); // Send HTML response
+void sendSensorData(float totalSensor, int sensorID) 
+{
+    myData.sensor = sensorID;
+    myData.value = totalSensor / 10.0;  // Promedio de los valores
+    myData.infraRojo = 0;  // Aquí puedes ajustar el estado si es necesario
+
+    // Intentar enviar hasta que el envío sea exitoso o se alcance el número máximo de intentos
+    int intentos = 0;
+    while (!envioExitoso && intentos < reintentosMaximos) {
+        if (esp_now_send(peerInfo.peer_addr, (uint8_t *)&myData, sizeof(myData)) == ESP_OK) {
+            Serial.printf("Attempt %d: Data sent successfully for Sensor %d\n", intentos + 1, sensorID);
+            Serial.printf("Valor del sensor %.2f:", totalSensor);
+        } else {
+            Serial.printf("Attempt %d: Failed to send data for Sensor %d\n", intentos + 1, sensorID);
+        }
+        
+        // Incrementar los intentos y esperar un poco antes de reintentar
+        intentos++;
+        delay(100);  // Espera
+    }
+
+
+    if (envioExitoso) {
+      Serial.printf("Sensor %d: Data was successfully received by the other ESP32.\n", sensorID);
+    } else {
+      Serial.printf("Sensor %d: Failed to send data after %d attempts.\n", sensorID, reintentosMaximos);
+    }
+
+    // Resetear el estado de envioExitoso para el próximo envío
+    envioExitoso = false;
 }
