@@ -1,5 +1,6 @@
 #include <esp_now.h>
 #include <WiFi.h>
+#include <WebServer.h>
 
 #define SENSORHUMEDAD_1 33      /* Define the pin for the first sensor */
 #define SENSORHUMEDAD_2 34      /* Define the pin for the second sensor */
@@ -16,6 +17,10 @@ float totalSensor[4] = {0, 0, 0, 0};  // Arreglo que contiene los valores de los
 bool envioExitoso = false;  // Variable para indicar si el envío fue exitoso
 int reintentosMaximos = 100;   // Número máximo de reintentos
 
+// WiFi Credentials
+const char* ssid = "INFINITUM84AF";
+const char* password = "4tPVYEG7FE";
+WiFiServer server(80);  // El servidor escucha en el puerto 80
 
 // Structure to hold data
 typedef struct struct_message {
@@ -23,8 +28,6 @@ typedef struct struct_message {
     int sensor;        // Sensor identifier
     int infraRojo;
 } struct_message;
-
-
 
 struct_message myData;
 esp_now_peer_info_t peerInfo;
@@ -37,21 +40,16 @@ int sensor4 = 0;
 // MAC Address of the receiving ESP32 - edit as needed
 uint8_t broadcastAddress[] = {0xA0, 0xB7, 0x65, 0x22, 0xF5, 0x28};
 
-// Create an instance of the web server on port 80
-//Server Server(80);
 
 void setup() 
 {
     Serial.begin(115200);
-    
 
-    pinMode(2, OUTPUT);
     //Humidity sensor inputs
     pinMode(SENSORHUMEDAD_1, INPUT); 
     pinMode(SENSORHUMEDAD_2, INPUT);  
     pinMode(SENSORHUMEDAD_3, INPUT);  
     pinMode(SENSORHUMEDAD_4, INPUT);    
-
 
     //Infrarojo inputs
     pinMode(SENSOR_INFRAROJO_1, INPUT);
@@ -60,6 +58,18 @@ void setup()
     pinMode(SENSOR_INFRAROJO_4, INPUT);  
 
     WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    Serial.println("");
+
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
 
     // Initialize ESP-NOW
     if (esp_now_init() != ESP_OK) 
@@ -81,6 +91,14 @@ void setup()
        Serial.println("Failed to add peer");
        return;
     }
+
+    // Setup web server handlers
+    server.on("/", handle_OnConnect);
+    server.on("/stop", handle_stop);
+    server.on("/start", handle_start);
+
+    server.begin();
+    Serial.println("HTTP server started");
 }
 
 void loop() 
@@ -245,3 +263,27 @@ void sendSensorData(float totalSensor, int sensorID)
     // Resetear el estado de envioExitoso para el próximo envío
     envioExitoso = false;
 }
+
+String SendHTML() 
+{
+    String ptr = "<!DOCTYPE html> <html>\n";
+    ptr += "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
+    ptr += "<meta http-equiv=\"refresh\" content=\"1\">\n";
+    ptr += "<title>Carrito</title>\n";
+    ptr += "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
+    ptr += "body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 10px;}\n";
+    ptr += ".button {display: block;width: 120px;background-color: #3498db;border: none;color: white;text-decoration: none;font-size: 25px;margin: 0px auto 35px;cursor: pointer;}\n";
+    ptr += "</style>\n";
+    ptr += "</head>\n<body>\n";
+    ptr += "<br><br><h2>Sensores de Humedad</h2>";  
+    ptr += "<p>Humedad Maceta 1: " + String(totalSensor[0]) + "</p>";
+    ptr += "<p>Humedad Maceta 2" + String(totalSensor[1]) + "</p>";
+    ptr += "<p>Humedad Maceta 3: " + String(totalSensor[2]) + "</p>";
+    ptr += "<p>Humedad Maceta 4: " + String(totalSensor[3]) + "</p>";
+    ptr += "</body>\n</html>\n";
+    return ptr;
+}
+
+
+
+
