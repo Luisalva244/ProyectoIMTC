@@ -20,7 +20,7 @@ int reintentosMaximos = 100;   // Número máximo de reintentos
 // WiFi Credentials
 const char* ssid = "INFINITUM84AF";
 const char* password = "4tPVYEG7FE";
-WiFiServer server(80);  // El servidor escucha en el puerto 80
+WebServer server(80);  // El servidor escucha en el puerto 80
 
 // Structure to hold data
 typedef struct struct_message {
@@ -94,7 +94,6 @@ void setup()
 
     // Setup web server handlers
     server.on("/", handle_OnConnect);
-    
     server.begin();
     Serial.println("HTTP server started");
 }
@@ -107,10 +106,15 @@ void loop()
      bool estadoSensor4 = false;
 
      for (int i = 1; i < 5; i++) 
-     {
-        totalSensor[i] = 0;  // Resetear el valor acumulado antes de la suma
+     { 
+        if (i>1)
+        {
+          totalSensor[i] = 0;
+        } 
+         // Resetear el valor acumulado antes de la suma
         for (int j = 0; j < 10; j++) 
         {
+          Serial.println(i);
           totalSensor[i] = readSensor(i+31); 
           delay(50);  // Esperar un poco entre lecturas para estabilizar
         }
@@ -131,6 +135,7 @@ void loop()
          Serial.println("Hola");
          Serial.println(i);
          Serial.println(totalSensor[i]);
+         server.handleClient();
        }
      }
 
@@ -186,11 +191,6 @@ void loop()
 
     } while(estadoSensor1 == false && estadoSensor2 == false && estadoSensor3 == false && estadoSensor4 == false);  
     
-      
-    totalSensor1 = 0;
-    totalSensor2 = 0;
-    totalSensor3 = 0;
-    totalSensor4 = 0;
     // Add any other logic you want to execute
 }
 
@@ -249,7 +249,7 @@ void sendSensorData(float totalSensor, int sensorID)
         
         // Incrementar los intentos y esperar un poco antes de reintentar
         intentos++;
-        delay(100);  // Espera
+        delay(50);  // Espera
     }
 
 
@@ -265,14 +265,48 @@ void sendSensorData(float totalSensor, int sensorID)
 
 void handle_OnConnect() 
 {
-    String html = "<html><body><h1>Sensor Data</h1>";
-    html += "<p>Sensor 1: " + String(totalSensor[0]) + "</p>";
-    html += "<p>Sensor 2: " + String(totalSensor[1]) + "</p>";
-    html += "<p>Sensor 3: " + String(totalSensor[2]) + "</p>";
-    html += "<p>Sensor 4: " + String(totalSensor[3]) + "</p>";
-    html += "<br><br><a href='/start'>Start</a><br>";
-    html += "<a href='/stop'>Stop</a>";
-    html += "</body></html>";
-
-    server.send(200, "text/html", html);  // Send the HTML response
+    String html = "<!DOCTYPE html><html lang='en'>\n";
+    html += "<head>\n";
+    html += "<meta charset='UTF-8'>\n";
+    html += "<meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>\n";
+    html += "<title>Sensor Data</title>\n";
+    
+    // Estilos CSS
+    html += "<style>\n";
+    html += "body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }\n";
+    html += "header { background-color: #3498db; color: white; padding: 15px; text-align: center; }\n";
+    html += "h1 { margin: 0; font-size: 2em; }\n";
+    html += "main { padding: 20px; text-align: center; }\n";
+    html += "h2 { color: #333; }\n";
+    html += "p { font-size: 1.2em; color: #555; margin-bottom: 20px; }\n";
+    html += ".sensorData { margin-top: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }\n";
+    html += ".sensorData p { margin: 10px 0; }\n";
+    html += "</style>\n";
+    
+    html += "</head>\n";
+    html += "<body>\n";
+    
+    // Cabecera
+    html += "<header>\n";
+    html += "<h1>Datos de Sensores</h1>\n";
+    html += "</header>\n";
+    
+    // Contenido principal
+    html += "<main>\n";
+    html += "<h2>Humedad de los Sensores</h2>\n";
+    html += "<div class='sensorData'>\n";
+    html += "<p>Sensor 1: " + String(totalSensor[1]/10) + "</p>\n";
+    html += "<p>Sensor 2: " + String(totalSensor[2]/10) + "</p>\n";
+    html += "<p>Sensor 3: " + String(totalSensor[3]/10) + "</p>\n";
+    html += "<p>Sensor 4: " + String(totalSensor[4]/10) + "</p>\n";
+    html += "</div>\n";
+    
+    // Recargar la página cada 5 segundos
+    html += "<meta http-equiv='refresh' content='20'>\n";
+    
+    html += "</main>\n";
+    html += "</body>\n";
+    html += "</html>\n";
+    
+    server.send(200, "text/html", html);  // Enviar la respuesta HTML
 }
