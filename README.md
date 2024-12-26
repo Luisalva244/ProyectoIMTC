@@ -1,7 +1,7 @@
 # AgroSmart
 Propósito del Proyecto
 
-AgroSmart es un prototipo funcional diseñado para optimizar el riego en huertos urbanos mediante el uso de tecnología autónoma. Este sistema integra un carro autónomo que realiza el riego de manera eficiente y un dispositivo central encargado de monitorear la humedad del suelo en los huertos.
+AgroSmart es un prototipo diseñado para optimizar el riego en huertos urbanos mediante el uso de tecnología autónoma. Este sistema integra un carro autónomo que realiza el riego de manera eficiente y un dispositivo central encargado de monitorear la humedad del suelo en los huertos.
 Funcionamiento del Sistema
 
     Monitorización de Humedad:
