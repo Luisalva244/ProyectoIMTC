@@ -189,14 +189,14 @@ void loop() {
    if (valorHumedad3 < 8 && sensorInfrarojo3 == true  && sensorDetected3 == 2 && action3 == false) 
     {
       Serial.println("Action triggered based on received data.");
-      valorHumedad3 = 10; // Reiniciar el valor
-      sensorInfrarojo1 = true; // Reiniciar el estado     
+      valorHumedad3 = 10;
+      sensorInfrarojo1 = true;   
       action3 = true;
       digitalWrite(MOTOR_IZQ1, LOW);
       digitalWrite(MOTOR_IZQ2, LOW);
       digitalWrite(MOTOR_DER1, LOW);
       digitalWrite(MOTOR_DER2, LOW);
-      ledcWrite(ENA, 0);  // Establecer el ciclo de trabajo PWM para el motor izquierdo
+      ledcWrite(ENA, 0);  
       ledcWrite(ENB, 0);  
       Serial.println("Contador 3");
       Serial.println(sensorDetected3);
@@ -209,15 +209,17 @@ void loop() {
 
     if (valorHumedad3 > 8 && sensorInfrarojo3 == true && sensorDetected3 == 2 && action3 == false) 
     {
-      ajustarVelocidadMotores(STOP);
       Serial.println("Action triggered based on received data.");
-      valorHumedad3 = 10; // Reiniciar el valor
-      sensorInfrarojo3 = false; // Reiniciar el estado
+      valorHumedad3 = 10; 
+      sensorInfrarojo3 = false; 
+      digitalWrite(MOTOR_IZQ1, LOW);
+      digitalWrite(MOTOR_IZQ2, LOW);
+      digitalWrite(MOTOR_DER1, LOW);
+      digitalWrite(MOTOR_DER2, LOW);
       Serial.println("Contador 3");
       Serial.println(sensorDetected3);
       prenderBomba();
       action3 = true;
-      ajustarVelocidadMotores(STOP);
       delay(6000);
       Serial.println("Adios accion desde sensor 3");
     }
@@ -225,13 +227,13 @@ void loop() {
    if (valorHumedad4 < 8 && sensorInfrarojo4 == true) 
     {
       Serial.println("Action triggered based on received data.");
-      valorHumedad4 = 0; // Reiniciar el valor
+      valorHumedad4 = 0;
       sensorInfrarojo1 = false; // Reiniciar el estado  
       digitalWrite(MOTOR_IZQ1, LOW);
       digitalWrite(MOTOR_IZQ2, LOW);
       digitalWrite(MOTOR_DER1, LOW);
       digitalWrite(MOTOR_DER2, LOW);
-      ledcWrite(ENA, 0);  // Establecer el ciclo de trabajo PWM para el motor izquierdo
+      ledcWrite(ENA, 0);  
       ledcWrite(ENB, 0);      
       Serial.println("Contador 4");
       Serial.println(sensorDetected4);
@@ -243,8 +245,8 @@ void loop() {
     {
       ajustarVelocidadMotores(STOP);
       Serial.println("Action triggered based on received data.");
-      valorHumedad4 = 10; // Reiniciar el valor
-      sensorInfrarojo4 = false; // Reiniciar el estado
+      valorHumedad4 = 10; 
+      sensorInfrarojo4 = false; 
       Serial.println("Contador 4");
       Serial.println(sensorDetected4);
       prenderBomba();
@@ -266,20 +268,20 @@ void OnDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     // Copia los datos entrantes en la estructura receivedData
     memcpy(&receivedData, incomingData, sizeof(receivedData));
 
-    // Imprime el identificador del sensor y el valor recibid
+
     // Manejar los datos recibidos
     if (receivedData.sensor == 1 && receivedData.value >= 8) 
     {
       // Datos del Sensor 1
       Serial.print("Sensor 1 average value: ");
       Serial.println(receivedData.value);
-      valorHumedad1 = receivedData.value; // Almacenar el valor de humedad
+      valorHumedad1 = receivedData.value; 
       sensorDetected1++;
     } else if (receivedData.sensor == 1 && receivedData.value < 8)
     {
       Serial.print("Sensor 1 average value: ");
       Serial.println(receivedData.value);
-      valorHumedad1 = receivedData.value; // Almacenar el valor de humedad
+      valorHumedad1 = receivedData.value; 
       sensorDetected1++;    
     }
      
@@ -294,13 +296,13 @@ void OnDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     {
       Serial.print("Sensor 2 average value: ");
       Serial.println(receivedData.value);
-      valorHumedad2 = 10; // Almacenar el valor de humedad
+      valorHumedad2 = receivedData.value; 
       sensorDetected2++;    
     }
 
-    if (receivedData.sensor == 3 && receivedData.value > 8) 
+    if (receivedData.sensor == 3 && receivedData.value >= 8) 
     {
-      // Datos del Sensor 2
+      // Datos del Sensor 3
       Serial.print("Sensor 3 average value: ");
       Serial.println(receivedData.value);
       valorHumedad3 = receivedData.value;
@@ -309,11 +311,11 @@ void OnDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     {
       Serial.print("Sensor 3 average value: ");
       Serial.println(receivedData.value);
-      valorHumedad3 = receivedData.value; // Almacenar el valor de humedad
+      valorHumedad3 = receivedData.value; 
       sensorDetected3++;    
     }
 
-    if (receivedData.sensor == 4 && receivedData.value > 8) 
+    if (receivedData.sensor == 4 && receivedData.value >= 8) 
     {
       // Datos del Sensor 4
       Serial.print("Sensor 4 average value: ");
@@ -324,11 +326,11 @@ void OnDataRecv(const esp_now_recv_info_t *mac, const uint8_t *incomingData, int
     {
       Serial.print("Sensor 4 average value: ");
       Serial.println(receivedData.value);
-      valorHumedad4 = receivedData.value; // Almacenar el valor de humedad
+      valorHumedad4 = receivedData.value; 
       sensorDetected4++;    
     }
 
-    // Manejar el estado del sensor infrarrojo
+    // Maneja el estado del sensor infrarrojo
     if (receivedData.infraRojo == 1  && valorHumedad1 > 8) 
     {
       sensorInfrarojo1 = true;
@@ -408,10 +410,6 @@ Seguidor Direccion(int pinIzquierdo, int pinCentro, int pinDerecho) {
         Serial.println("Parado");
         return DERECHA1;  // Detener
     } 
- /*   if (izquierda == LOW && centro == LOW && derecha == LOW){
-        Serial.println("ajuste");
-        return DERECHA1;
-    }*/
     if (izquierda == LOW && centro == LOW && derecha == HIGH){
         Serial.println("ajuste");
         return DERECHA1;
@@ -483,10 +481,8 @@ void prenderBomba()
   digitalWrite(MOTOR_DER2, LOW);
   ledcWrite(ENA, 0);  // Establecer el ciclo de trabajo PWM para el motor izquierdo
   ledcWrite(ENB, 0);   
-  ajustarVelocidadMotores(STOP);
   digitalWrite(BOMBA_N, HIGH);
   digitalWrite(BOMBA_P, LOW);
-  ajustarVelocidadMotores(STOP);
   Serial.println("hola bomba");
   ledcWrite(ENA1, 4095);  
   delay(8000);
