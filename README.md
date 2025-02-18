@@ -21,4 +21,4 @@ Objetivos
 
 Prototipo 
 
-[image](https://github.com/Luisalva244/ProyectoIMTC/blob/main/WhatsApp%20Image%202024-12-26%20at%204.41.58%20PM.jpeg)
+![Imagen](https://github.com/Luisalva244/ProyectoIMTC/blob/main/WhatsApp%20Image%202024-12-26%20at%204.41.58%20PM.jpeg)
