@@ -18,3 +18,7 @@ Objetivos
     Automatizar el riego de huertos urbanos.
     Optimizar el uso del agua mediante la lectura precisa de datos de humedad.
     Reducir la intervención manual en el proceso de riego.
+
+Prototipo 
+
+[image](https://github.com/Luisalva244/ProyectoIMTC/blob/main/WhatsApp%20Image%202024-12-26%20at%204.41.58%20PM.jpeg)
